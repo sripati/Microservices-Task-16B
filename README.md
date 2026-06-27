@@ -5,6 +5,33 @@ This document provides details on testing various services after running the `do
 
 ---
 
+## Architecture Overview
+
+```
+                    ┌─────────────────────────────┐
+                    │     Gateway Service :3003    │
+                    │  (Single entry point / BFF)  │
+                    └────────────┬────────────────-┘
+                                 │ routes requests
+             ┌───────────────────┼───────────────────┐
+             ▼                   ▼                   ▼
+  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
+  │  User Service    │  │ Product Service  │  │  Order Service   │
+  │    :3000         │  │    :3001         │  │    :3002         │
+  └──────────────────┘  └──────────────────┘  └──────────────────┘
+
+  All services communicate via Docker network: microservices-network
+```
+
+| Service          | Port | Description                          |
+|------------------|------|--------------------------------------|
+| user-service     | 3000 | Returns list of users                |
+| product-service  | 3001 | Returns list of products             |
+| order-service    | 3002 | Manages orders (in-memory)           |
+| gateway-service  | 3003 | Aggregates all services (API gateway)|
+
+---
+
 ## Services and Endpoints
 
 ### **User Service**
