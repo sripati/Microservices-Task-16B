@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-service
+  labels:
+    app: product-service
+    tier: backend
+    app.kubernetes.io/part-of: microservices-demo
+spec:
+  # ClusterIP => internal-only, stable DNS name for service discovery.
+  # The gateway reaches this pod set at http://product-service:3001
+  type: ClusterIP
+  selector:
+    app: product-service
+  ports:
+    - name: http
+      protocol: TCP
+      port: 3001         # port other services call
+      targetPort: http      # named container port -> 3001

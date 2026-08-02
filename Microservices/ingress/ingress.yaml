@@ -1,0 +1,78 @@
+# ---------------------------------------------------------------------------
+# BONUS TASK - Ingress routing
+#
+# Two Ingress objects are used on purpose, because the rewrite annotation
+# applies to EVERY path inside a single Ingress object:
+#
+#   1) microservices-api-ingress -> /api/* routed DIRECTLY to each backend
+#      service, with the "/api" prefix stripped, because user-service serves
+#      /users (not /api/users).
+#          /api/users     -> user-service:3000/users
+#          /api/products  -> product-service:3001/products
+#          /api/orders    -> order-service:3002/orders
+#
+#   2) microservices-root-ingress -> "/" routed to the gateway with NO
+#      rewriting, so the gateway keeps receiving the original path.
+#
+# More specific paths win over "/", so the two objects coexist safely.
+# Host: microservices.local  (add it to /etc/hosts -> minikube ip)
+# ---------------------------------------------------------------------------
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: microservices-api-ingress
+  labels:
+    app.kubernetes.io/part-of: microservices-demo
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    # capture group $1 = resource name, $2 = the rest of the path
+    # /api/users      -> /users
+    # /api/orders/12  -> /orders/12
+    nginx.ingress.kubernetes.io/rewrite-target: /$1$2
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: microservices.local
+      http:
+        paths:
+          - path: /api/(users)(/.*)?$
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: user-service
+                port:
+                  number: 3000
+          - path: /api/(products)(/.*)?$
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: product-service
+                port:
+                  number: 3001
+          - path: /api/(orders)(/.*)?$
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: order-service
+                port:
+                  number: 3002
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: microservices-root-ingress
+  labels:
+    app.kubernetes.io/part-of: microservices-demo
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: microservices.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway-service
+                port:
+                  number: 3003

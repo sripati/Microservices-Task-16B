@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-service
+  labels:
+    app: gateway-service
+    tier: gateway
+    app.kubernetes.io/part-of: microservices-demo
+spec:
+  # NodePort: the gateway is the only public entry point of the system.
+  # It still gets a ClusterIP, so in-cluster discovery via
+  # http://gateway-service:3003 keeps working exactly the same.
+  # (Switch to ClusterIP if you expose it only through the Ingress.)
+  type: NodePort
+  selector:
+    app: gateway-service
+  ports:
+    - name: http
+      protocol: TCP
+      port: 3003          # cluster-internal port
+      targetPort: http    # named container port -> 3003
+      nodePort: 30080     # reachable at http://<minikube-ip>:30080
